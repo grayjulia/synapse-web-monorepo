@@ -10,7 +10,10 @@ import {
   useCreateFormTemplate,
   useUpdateFormTemplate,
 } from '@/synapse-queries/dataaccess/useFormTemplate'
-import { FormTemplate } from '@sage-bionetworks/synapse-client'
+import {
+  FormTemplate,
+  FormTemplateStep,
+} from '@sage-bionetworks/synapse-client'
 import { SynapseClientError } from '@sage-bionetworks/synapse-client/util/SynapseClientError'
 import { RJSFSchema } from '@rjsf/utils'
 import isEqual from 'lodash-es/isEqual'
@@ -20,7 +23,6 @@ import {
   useQueryClient,
 } from '@tanstack/react-query'
 import { useSynapseContext } from '@/utils/context/SynapseContext'
-import { EditableFormTemplateStep, toFormTemplateSteps } from './utils'
 import {
   formatSchema$id,
   getNextSchemaVersion,
@@ -36,7 +38,8 @@ export type SaveFormTemplateDraftParams = {
   initialJsonSchema?: RJSFSchema
   name: string
   jsonSchema: RJSFSchema
-  steps: EditableFormTemplateStep[]
+  /** The steps as the template stores them. */
+  steps: FormTemplateStep[]
 }
 
 export type SaveFormTemplateDraftResult =
@@ -72,10 +75,8 @@ export function useSaveFormTemplate(
   >({
     ...options,
     mutationFn: async params => {
-      const formTemplateSteps = toFormTemplateSteps(params.steps)
-
       const validationErrors = validateFormTemplateFields(
-        formTemplateSteps,
+        params.steps,
         params.jsonSchema,
       )
       if (validationErrors.length > 0) {
@@ -119,7 +120,7 @@ export function useSaveFormTemplate(
         ...params.initialTemplate,
         name: params.name,
         schema$id,
-        steps: formTemplateSteps,
+        steps: params.steps,
       }
 
       const template = params.initialTemplate?.id
